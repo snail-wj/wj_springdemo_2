@@ -1,0 +1,100 @@
+技术分析之Spring框架的IOC功能之注解的方式
+
+1. 步骤一：导入注解开发所有需要的jar包
+    * 引入IOC容器必须的6个jar包
+    * 多引入一个：Spring框架的AOP的jar包，spring-aop的jar包
+
+2. 步骤二：创建对应的包结构，编写Java的类
+    * UserService			-- 接口
+    * UserServiceImpl		-- 具体的实现类
+
+3. 步骤三：在src的目录下，创建applicationContext.xml的配置文件，然后引入约束。注意：因为现在想使用注解的方式，那么引入的约束发生了变化
+    * 需要引入context的约束，具体的约束如下
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:context="http://www.springframework.org/schema/context" xsi:schemaLocation="
+                http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd"> <!-- bean definitions here -->
+        </beans>
+
+4. 步骤四：在applicationContext.xml配置文件中开启组件扫描
+    * Spring的注解开发:组件扫描
+        <context:component-scan base-package="com.itheima.demo1"/>
+
+    * 注意：可以采用如下配置
+        <context:component-scan base-package="com.itheima"/> 这样是扫描com.itheima包下所有的内容
+
+5. 步骤五：在UserServiceImpl的实现类上添加注解
+        * @Component(value="userService")	-- 相当于在XML的配置方式中 <bean id="userService" class="...">
+
+6. 步骤六：编写测试代码
+    public class SpringDemo1 {
+        @Test
+        public void run1(){
+            ApplicationContext ac = new ClassPathXmlApplicationContext("applicationContext.xml");
+            UserService us = (UserService) ac.getBean("userService");
+            us.save();
+        }
+    }
+
+**Spring框架中Bean管理的常用注解**
+
+    1. @Component:组件.(作用在类上，代表的是主键)
+
+    2. Spring中提供@Component的三个衍生注解:(功能目前来讲是一致的)
+    		* @Controller		-- 作用在WEB层
+    		* @Service			-- 作用在业务层
+    		* @Repository		-- 作用在持久层
+
+    	    * 说明：这三个注解是为了让标注类本身的用途清晰，Spring在后续版本会对其增强
+
+    3. 属性注入的注解(说明：使用注解注入的方式,可以不用提供set方法)
+    		* 如果是注入的普通类型，可以使用value注解
+    			* @Value			-- 用于注入普通类型
+
+    		* 如果注入的是对象类型，使用如下注解
+    			* @Autowired		-- 默认按类型进行自动装配
+    				* 如果想按名称注入
+    				* @Qualifier	-- 强制使用名称注入
+
+    		* @Resource				-- 相当于@Autowired和@Qualifier一起使用
+    			* 强调：Java提供的注解
+    			* 属性使用name属性
+
+**Bean的作用范围和生命周期的注解**
+	1. Bean的作用范围注解
+		* 注解为@Scope(value="prototype")，作用在类上。值如下：
+			* singleton		-- 单例，默认值
+			* prototype		-- 多例
+
+	2. Bean的生命周期的配置（了解）
+		* 注解如下：
+			* @PostConstruct	-- 相当于init-method
+			* @PreDestroy		-- 相当于destroy-method
+
+**Spring框架整合JUnit单元测试**
+1. 为了简化了JUnit的测试，使用Spring框架也可以整合测试
+	2. 具体步骤
+		* 要求：必须先有JUnit的环境（即已经导入了JUnit4的开发环境）！！
+
+		* 步骤一：在程序中引入:spring-test.jar
+		* 步骤二：在具体的测试类上添加注解
+			@RunWith(SpringJUnit4ClassRunner.class)
+			@ContextConfiguration("classpath:applicationContext.xml")
+			public class SpringDemo1 {
+
+				@Resource(name="userService")
+				private UserService userService;
+
+				@Test
+				public void demo2(){
+					userService.save();
+				}
+			}
+
+**为什么要有代理对象**
+    1.在请求和目标对象中间含有一个代理对象，这个代理对象就相当于把目标对象包裹了一层，
+    如果用户需要访问目标对象，那么他可以访问代理对象，再由代理对象去访问目标对象，并且
+    这个代理对象可以封装好多方法
+    JDK动态代理，有接口
+    cglib技术，代理模式，没有接口，采用生成类的子类的方式
